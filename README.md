@@ -1,2 +1,0 @@
-# ctf-platform
-CTF Platform
