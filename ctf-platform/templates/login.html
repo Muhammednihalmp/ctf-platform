@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block bodyclass %}auth-page{% endblock %}
+{% block title %}Log in · {{ platform_name }}{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <aside class="auth-visual">
+    <span class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Secure channel</span>
+    <h2>Access the arena.</h2>
+    <p>One handle, every challenge, a live board of everyone trying to break in.</p>
+    <div class="auth-terminal mono" aria-hidden="true">
+      <p><span class="t-prompt">$</span> auth --operator</p>
+      <p class="t-out">[ok] encrypted channel established</p>
+      <p class="t-out t-accent">awaiting credentials<span class="t-caret"></span></p>
+    </div>
+    <ul class="auth-points">
+      <li>Live scoreboard with instant solves</li>
+      <li>Challenge briefs, files and links in one place</li>
+      <li>Built for solo operators and full teams</li>
+    </ul>
+  </aside>
+
+  <div class="panel auth-card">
+    <span class="eyebrow">Operator login</span>
+    <h1>Welcome back</h1>
+    <p class="muted auth-sub">Enter the arena and keep capturing flags.</p>
+    <form method="post" autocomplete="on">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" required autofocus autocomplete="username" placeholder="your-handle">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••">
+      <button class="btn primary block" type="submit">Log in</button>
+    </form>
+    {% if registration_open %}
+    <p class="auth-alt muted">New here? <a href="{{ url_for('register') }}">Create an account</a></p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

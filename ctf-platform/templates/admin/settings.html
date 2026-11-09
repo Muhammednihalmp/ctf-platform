@@ -1,0 +1,97 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<section class="page-head compact">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Platform settings</h1>
+    <p class="muted page-sub">Branding, access, scoring mode, scoreboard visibility and the look of the arena.</p>
+  </div>
+</section>
+
+<form method="post" enctype="multipart/form-data" class="settings-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="form-layout">
+    <div class="panel form-main">
+      <h2 class="section-title">Identity</h2>
+      <label for="platform_name">Platform name</label>
+      <input id="platform_name" name="platform_name" type="text" required maxlength="40" value="{{ platform_name }}">
+      <p class="hint">Shown in the navigation, page titles and homepage.</p>
+
+      <label for="tagline">Tagline</label>
+      <input id="tagline" name="tagline" type="text" maxlength="140" value="{{ tagline }}">
+      <p class="hint">One short line under the platform name on the homepage.</p>
+
+      <div class="divider"></div>
+      <h2 class="section-title">Access</h2>
+      <label class="check">
+        <input type="checkbox" name="registration_open" value="1" {% if registration_open %}checked{% endif %}>
+        Allow new player registrations
+      </label>
+      <p class="hint">Turn this off once your event starts to keep the roster fixed.</p>
+
+      <div class="divider"></div>
+      <h2 class="section-title">Scoring mode</h2>
+      <p class="hint">Switch the whole platform between individual scores and combined team scores. Existing teams and solves are kept when you switch.</p>
+      <div class="mode-grid" role="radiogroup" aria-label="Scoring mode">
+        <label class="mode-option">
+          <input type="radio" name="platform_mode" value="user" {% if platform_mode == 'user' %}checked{% endif %}>
+          <span class="mode-copy">
+            <b>User mode</b>
+            <span>Every player scores on their own. Teams stay saved but are not used.</span>
+          </span>
+        </label>
+        <label class="mode-option">
+          <input type="radio" name="platform_mode" value="team" {% if platform_mode == 'team' %}checked{% endif %}>
+          <span class="mode-copy">
+            <b>Team mode</b>
+            <span>Members combine solves into one team score. Players must join a team to submit flags.</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="divider"></div>
+      <h2 class="section-title">Scoreboard</h2>
+      <label class="check">
+        <input type="checkbox" name="scoreboard_visible" value="1" {% if scoreboard_visible %}checked{% endif %}>
+        Show the scoreboard to players
+      </label>
+      <p class="hint">When off, players lose the scoreboard link and cannot open standings. Admins still get a preview.</p>
+
+      <div class="divider"></div>
+      <h2 class="section-title">Accent theme</h2>
+      <p class="hint">Pick the colour language for buttons, highlights, score cells and the arena glow.</p>
+      <div class="theme-grid" role="radiogroup" aria-label="Accent theme">
+        {% for key, label in themes.items() %}
+        <label class="theme-option">
+          <input type="radio" name="accent_theme" value="{{ key }}" {% if accent_theme == key %}checked{% endif %}>
+          <span class="theme-preview theme-{{ key }}" aria-hidden="true"></span>
+          <span class="theme-label">{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <aside class="panel form-side">
+      <h2 class="section-title">Background</h2>
+      <label class="upload-zone small" for="bg_file">
+        <span class="upload-icon" aria-hidden="true">&#8682;</span>
+        <span class="upload-title">Upload background image</span>
+        <span class="upload-hint">PNG, JPG or WebP · up to 6 MB</span>
+        <span class="upload-name" id="upload-name">No file selected</span>
+      </label>
+      <input id="bg_file" name="bg_file" type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" data-file-input>
+      <p class="hint">Wide images around 2:1 work best. The image is darkened automatically for readability.</p>
+
+      {% if has_custom_bg %}
+      <label class="check">
+        <input type="checkbox" name="reset_bg" value="1">
+        Restore the bundled banner
+      </label>
+      {% endif %}
+
+      <button class="btn primary block" type="submit">Save settings</button>
+    </aside>
+  </div>
+</form>
+{% endblock %}

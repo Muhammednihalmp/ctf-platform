@@ -1,0 +1,89 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<section class="page-head compact">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Dashboard</h1>
+    <p class="muted page-sub">A quick pulse on the arena, scoring mode and challenge schedule.</p>
+  </div>
+  <div class="row actions-row">
+    <a class="btn" href="{{ url_for('admin_challenge_new') }}">+ New challenge</a>
+    <a class="btn" href="{{ url_for('admin_notifications') }}">Push notification</a>
+    <a class="btn primary" href="{{ url_for('admin_challenges') }}">Manage challenges</a>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat-card">
+    <span class="stat-label">Players</span>
+    <b>{{ stats.users }}</b>
+    <span class="stat-sub">registered players · {{ stats.teams }} team{{ '' if stats.teams == 1 else 's' }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Challenges</span>
+    <b>{{ stats.challenges }}</b>
+    <span class="stat-sub">{{ stats.live }} live · {{ stats.upcoming }} scheduled · {{ stats.ended }} ended · {{ stats.challenges - stats.visible }} hidden</span>
+  </div>
+  <a class="stat-card stat-link" href="{{ url_for('admin_settings') }}">
+    <span class="stat-label">Scoring mode</span>
+    <span class="stat-value {{ 'is-live' if team_mode else '' }}">{{ 'Team' if team_mode else 'User' }}</span>
+    <span class="stat-sub">{{ 'combined team scores' if team_mode else 'individual scores' }} · manage</span>
+  </a>
+  <a class="stat-card stat-link" href="{{ url_for('admin_notifications') }}">
+    <span class="stat-label">Notifications</span>
+    <span class="stat-value">{{ stats.notifications }}</span>
+    <span class="stat-sub">active broadcast{{ '' if stats.notifications == 1 else 's' }} · manage</span>
+  </a>
+  <div class="stat-card">
+    <span class="stat-label">Attachments</span>
+    <b>{{ stats.files }}</b>
+    <span class="stat-sub">downloadable files</span>
+  </div>
+  <a class="stat-card stat-link" href="{{ url_for('admin_settings') }}">
+    <span class="stat-label">Scoreboard</span>
+    <span class="stat-value {{ 'is-live' if scoreboard_visible else 'is-off' }}">{{ 'Live' if scoreboard_visible else 'Hidden' }}</span>
+    <span class="stat-sub">visibility · manage</span>
+  </a>
+  <div class="stat-card accent">
+    <span class="stat-label">Solves</span>
+    <b>{{ stats.solves }}</b>
+    <span class="stat-sub">flags captured</span>
+  </div>
+</div>
+
+<div class="panel table-wrap">
+  <div class="panel-head">
+    <h2>Recent solves</h2>
+    <span class="muted">Latest 10 submissions</span>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>Player</th><th>Team</th><th>Challenge</th><th class="num">Points</th><th>When (UTC)</th></tr></thead>
+    <tbody>
+    {% for s in recent %}
+      <tr>
+        <td><span class="player-cell"><span class="avatar small">{{ s.user.username[0]|upper }}</span>{{ s.user.username }}</span></td>
+        <td class="muted">{{ s.user.team.name if s.user.team else '—' }}</td>
+        <td>{{ s.challenge.title }}</td>
+        <td class="num">{{ s.challenge.points }}</td>
+        <td class="muted">{{ s.solved_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5"><div class="table-empty">No solves yet. Share the arena link and get players in.</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel table-wrap admin-quick-panel">
+  <div class="panel-head">
+    <h2>Exports &amp; quick actions</h2>
+    <span class="muted">Download event data</span>
+  </div>
+  <div class="quick-links">
+    <a class="btn small" href="{{ url_for('admin_export_solves') }}">Export solves CSV</a>
+    <a class="btn small" href="{{ url_for('admin_export_users') }}">Export users CSV</a>
+    <a class="btn small" href="{{ url_for('admin_teams') }}">Manage teams</a>
+    <a class="btn small" href="{{ url_for('admin_notifications') }}">Broadcast a message</a>
+  </div>
+</div>
+{% endblock %}

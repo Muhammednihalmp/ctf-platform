@@ -1,0 +1,123 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+{% set vis = (request.form.get('visible') == '1') if request.method == 'POST' else ch.visible %}
+{% set hint_text = request.form.get('hints', '') if request.method == 'POST' else (ch.hints or '') %}
+{% set start_value = request.form.get('start_at', '') if request.method == 'POST' else (ch.start_at.strftime('%Y-%m-%dT%H:%M') if ch.start_at else '') %}
+{% set end_value = request.form.get('end_at', '') if request.method == 'POST' else (ch.end_at.strftime('%Y-%m-%dT%H:%M') if ch.end_at else '') %}
+<section class="page-head compact">
+  <div>
+    <p class="eyebrow">Admin · Challenges</p>
+    <h1>{{ 'New challenge' if is_new else 'Edit challenge' }}</h1>
+    <p class="muted page-sub">{{ 'Create a target for your players.' if is_new else 'Update the target, its schedule, resources, hints and flag.' }}</p>
+  </div>
+  <a class="btn" href="{{ url_for('admin_challenges') }}">&larr; All challenges</a>
+</section>
+
+<form method="post" enctype="multipart/form-data" class="challenge-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="form-layout">
+    <div class="panel form-main">
+      <h2 class="section-title">Challenge details</h2>
+
+      <label for="title">Title</label>
+      <input id="title" name="title" type="text" required maxlength="120" value="{{ request.form.get('title', ch.title or '') }}" placeholder="e.g. Leaky Bucket">
+
+      <div class="row form-row">
+        <div class="grow">
+          <label for="category">Category</label>
+          <input id="category" name="category" type="text" list="cats" maxlength="40" value="{{ request.form.get('category', ch.category or '') }}" placeholder="Power Stone, Space Stone, Web…">
+          <datalist id="cats">{% for c in categories %}<option value="{{ c }}">{% endfor %}</datalist>
+        </div>
+        <div class="points-col">
+          <label for="points">Points</label>
+          <input id="points" name="points" type="number" min="1" max="10000" required value="{{ request.form.get('points', ch.points or 100) }}">
+        </div>
+      </div>
+
+      <label for="description">Description</label>
+      <textarea id="description" name="description" placeholder="Describe the challenge, set the scene, and tell players what they are looking at…">{{ request.form.get('description', ch.description or '') }}</textarea>
+      <p class="hint">Plain text shown to players. Line breaks are preserved.</p>
+
+      <label for="hints">Hints <span class="label-optional">optional</span></label>
+      <textarea id="hints" name="hints" maxlength="2000" placeholder="One nudge per line, e.g.&#10;Inspect the response headers&#10;The token is signed with a weak secret">{{ hint_text }}</textarea>
+      <p class="hint">One hint per line. Players reveal them one at a time in the challenge dialog. Leave blank for no hints.</p>
+
+      <label for="flag">Flag</label>
+      <input id="flag" class="mono" name="flag" type="text" required maxlength="255" value="{{ request.form.get('flag', ch.flag or '') }}" placeholder="flag{example_flag}" autocomplete="off">
+      <p class="hint">Players must match this exactly, including capitalization.</p>
+
+      <div class="divider"></div>
+      <h2 class="section-title">Resources</h2>
+
+      <label for="url">Challenge link <span class="label-optional">optional</span></label>
+      <input id="url" name="url" type="url" maxlength="500" value="{{ request.form.get('url', ch.url or '') }}" placeholder="https://instance.example.com">
+      <p class="hint">A hosted instance, remote target, or any external resource.</p>
+
+      <label for="attachment">Attachment file <span class="label-optional">optional</span></label>
+      <label class="upload-zone" for="attachment">
+        <span class="upload-icon" aria-hidden="true">&#8682;</span>
+        <span class="upload-title">Choose a file to upload</span>
+        <span class="upload-hint">Any file type · up to 25 MB</span>
+        <span class="upload-name" id="upload-name">No file selected</span>
+      </label>
+      <input id="attachment" name="attachment" type="file" class="sr-only" data-file-input>
+
+      {% if ch.file_name %}
+      <div class="current-file">
+        <div class="current-file-info">
+          <span class="current-file-icon" aria-hidden="true">&#128206;</span>
+          <div>
+            <b>{{ ch.file_original }}</b>
+            <span class="muted">{% if ch.file_size %}{{ ch.file_size|filesizeformat }} · {% endif %}currently attached</span>
+          </div>
+        </div>
+        <label class="check remove-check">
+          <input type="checkbox" name="remove_file" value="1">
+          Remove attachment
+        </label>
+      </div>
+      {% endif %}
+      <p class="hint">Uploading a new file replaces the current attachment. Files are served as forced downloads with a safe generated name.</p>
+
+      <div class="divider"></div>
+      <h2 class="section-title">Schedule</h2>
+      <p class="hint">All times are UTC. Leave both fields blank to keep the challenge open permanently.</p>
+      <div class="row form-row">
+        <div class="grow">
+          <label for="start_at">Starts at <span class="label-optional">optional</span></label>
+          <input id="start_at" name="start_at" type="datetime-local" value="{{ start_value }}">
+        </div>
+        <div class="grow">
+          <label for="end_at">Ends at <span class="label-optional">optional</span></label>
+          <input id="end_at" name="end_at" type="datetime-local" value="{{ end_value }}">
+        </div>
+      </div>
+      <p class="hint">Before the start time the target is locked and its details stay hidden. After the end time submissions close. Admins can always preview and submit.</p>
+    </div>
+
+    <aside class="panel form-side">
+      <h2 class="section-title">Publishing</h2>
+      <label class="check">
+        <input type="checkbox" name="visible" value="1" {% if vis %}checked{% endif %}>
+        Visible to players
+      </label>
+      <p class="hint">Hidden challenges stay in the admin panel but are not shown in the arena.</p>
+
+      <div class="side-summary">
+        <div><span class="muted">Status</span><span class="tag {{ 'on' if vis }}">{{ 'Visible' if vis else 'Hidden' }}</span></div>
+        <div><span class="muted">Points</span><b class="mono">{{ request.form.get('points', ch.points or 100) }}</b></div>
+        <div><span class="muted">Hints</span><b class="mono">{{ hint_text.splitlines()|select|list|length or '—' }}</b></div>
+        <div><span class="muted">Attachment</span><span class="mono">{{ ch.file_original if ch.file_name else '—' }}</span></div>
+        <div><span class="muted">Schedule</span><b class="mono">{{ 'Set' if (start_value or end_value) else 'Always open' }}</b></div>
+      </div>
+
+      <button class="btn primary block" type="submit">{{ 'Create challenge' if is_new else 'Save changes' }}</button>
+      <a class="btn block ghost" href="{{ url_for('admin_challenges') }}">Cancel</a>
+      {% if not is_new %}
+      <p class="hint center">Created {{ ch.created.strftime('%Y-%m-%d %H:%M') if ch.created else '—' }} UTC</p>
+      {% endif %}
+    </aside>
+  </div>
+</form>
+{% endblock %}

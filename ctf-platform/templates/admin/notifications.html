@@ -1,0 +1,81 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<section class="page-head compact">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Notifications</h1>
+    <p class="muted page-sub">Broadcast an announcement to every registered player.</p>
+  </div>
+  <span class="tag">{{ items|length }} total</span>
+</section>
+
+<div class="form-layout">
+  <div class="panel">
+    <h2 class="section-title">Push a notification</h2>
+    <form method="post" action="{{ url_for('admin_notifications') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="notification-title">Title</label>
+      <input id="notification-title" name="title" type="text" required maxlength="120" placeholder="e.g. Arena update">
+      <label for="notification-message">Message</label>
+      <textarea id="notification-message" name="message" class="notification-message-input" required maxlength="4000" placeholder="Write the announcement players should see…"></textarea>
+      <p class="hint">Every player sees this immediately in Alerts. Keep it short and actionable.</p>
+      <button class="btn primary" type="submit">Push to all players</button>
+    </form>
+  </div>
+
+  <aside class="panel form-side">
+    <h2 class="section-title">How it works</h2>
+    <div class="side-summary">
+      <div><span class="muted">Audience</span><b>All players</b></div>
+      <div><span class="muted">Delivery</span><b>Alerts inbox</b></div>
+      <div><span class="muted">Unread badge</span><b>Live</b></div>
+    </div>
+    <p class="hint">Players see an unread count in the navigation. Opening Alerts marks the messages as read.</p>
+    <p class="hint">Deactivate a notification to hide it without deleting its history, or delete it to remove it for everyone.</p>
+  </aside>
+</div>
+
+<div class="panel table-wrap">
+  <div class="panel-head">
+    <h2>Broadcast history</h2>
+    <span class="muted">Read counts update as players open Alerts</span>
+  </div>
+  {% if items %}
+  <table class="data-table">
+    <thead><tr><th>Notification</th><th>Author</th><th>Sent (UTC)</th><th class="num">Read by</th><th>Status</th><th class="actions-col">Actions</th></tr></thead>
+    <tbody>
+    {% for n in items %}
+      <tr>
+        <td>
+          <span class="table-title">{{ n.title }}</span>
+          <span class="table-sub">{{ n.message|truncate(100) }}</span>
+        </td>
+        <td class="muted">{{ n.author.username if n.author else '—' }}</td>
+        <td class="muted">{{ n.created.strftime('%Y-%m-%d %H:%M') if n.created else '—' }}</td>
+        <td class="num">{{ read_counts.get(n.id, 0) }}</td>
+        <td><span class="tag {{ 'on' if n.active }}">{{ 'Active' if n.active else 'Inactive' }}</span></td>
+        <td>
+          <div class="table-actions">
+            <form method="post" action="{{ url_for('admin_notification_toggle', nid=n.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn small" type="submit">{{ 'Deactivate' if n.active else 'Activate' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('admin_notification_delete', nid=n.id) }}" data-confirm="Delete this notification for everyone?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn small danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <span class="empty-icon" aria-hidden="true">&#128276;</span>
+    <h2>No notifications yet</h2>
+    <p class="muted">Use the form above to send your first broadcast.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

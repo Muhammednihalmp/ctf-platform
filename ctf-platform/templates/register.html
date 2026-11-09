@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block bodyclass %}auth-page{% endblock %}
+{% block title %}Register · {{ platform_name }}{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <aside class="auth-visual">
+    <span class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Open enrollment</span>
+    <h2>Join the roster.</h2>
+    <p>Claim a handle, pick your first target, and put your name on the board.</p>
+    <div class="auth-terminal mono" aria-hidden="true">
+      <p><span class="t-prompt">$</span> register --new-operator</p>
+      <p class="t-out">[ok] callsign available</p>
+      <p class="t-out t-accent">initialising profile<span class="t-caret"></span></p>
+    </div>
+    <ul class="auth-points">
+      <li>Free to join while registration is open</li>
+      <li>Your own score, solves and progress</li>
+      <li>Every challenge, file and link unlocked</li>
+    </ul>
+  </aside>
+
+  <div class="panel auth-card">
+    <span class="eyebrow">New operator</span>
+    <h1>Create account</h1>
+    <p class="muted auth-sub">Claim a handle, solve challenges, climb the board.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" required minlength="3" maxlength="24" pattern="[A-Za-z0-9_\-]+" value="{{ form.get('username', '') }}" autocomplete="username" placeholder="3–24 letters, numbers, _ or -">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required maxlength="120" value="{{ form.get('email', '') }}" autocomplete="email" placeholder="you@example.com">
+      <div class="row form-row">
+        <div class="grow">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+        </div>
+        <div class="grow">
+          <label for="confirm">Confirm password</label>
+          <input id="confirm" name="confirm" type="password" required minlength="8" autocomplete="new-password" placeholder="Repeat password">
+        </div>
+      </div>
+      <button class="btn primary block" type="submit">Create account</button>
+    </form>
+    <p class="auth-alt muted">Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+  </div>
+</div>
+{% endblock %}

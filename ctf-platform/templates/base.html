@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="{{ tagline }}">
+  <title>{% block title %}{{ platform_name }}{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ static_version }}">
+</head>
+<body class="{% block bodyclass %}{% endblock %}" data-theme="{{ accent_theme }}" style="--bg: url('{{ bg_url }}')">
+  <header class="nav">
+    <a class="brand" href="{{ url_for('index') }}">
+      <span class="brand-mark" aria-hidden="true">&#47;&#47;</span>
+      <span class="brand-text">
+        <span class="brand-name">{{ platform_name }}</span>
+        <span class="brand-kicker" aria-hidden="true"><span class="live-dot"></span> CTF arena</span>
+      </span>
+    </a>
+    <nav class="nav-links" aria-label="Main">
+      <a class="link" href="{{ url_for('challenges') }}" {% if request.endpoint in ('challenges', 'challenge_download') %}aria-current="page"{% endif %}>Challenges</a>
+      {% if scoreboard_visible or (me and me.is_admin) %}
+      <a class="link" href="{{ url_for('scoreboard') }}" {% if request.endpoint == 'scoreboard' %}aria-current="page"{% endif %}>Scoreboard</a>
+      {% endif %}
+      {% if me and (team_mode or my_team) %}
+      <a class="link" href="{{ url_for('team_home') }}" {% if request.endpoint and request.endpoint.startswith('team_') %}aria-current="page"{% endif %}>Team</a>
+      {% endif %}
+      {% if me %}
+      <a class="link nav-alerts" href="{{ url_for('notifications') }}" {% if request.endpoint == 'notifications' %}aria-current="page"{% endif %}>
+        Alerts{% if unread_notifications %}<span class="nav-badge">{{ unread_notifications if unread_notifications < 10 else '9+' }}</span>{% endif %}
+      </a>
+      {% endif %}
+      {% if me and me.is_admin %}<a class="link" href="{{ url_for('admin_dashboard') }}" {% if request.endpoint and request.endpoint.startswith('admin_') %}aria-current="page"{% endif %}>Admin</a>{% endif %}
+    </nav>
+    <div class="who">
+      {% if me %}
+        <span class="user-chip" title="Signed in as {{ me.username }}">
+          <span class="avatar" aria-hidden="true">{{ me.username[0]|upper }}</span>
+          <span class="user-meta">
+            <span class="user-name">{{ me.username }}</span>
+            <span class="user-role{{ ' is-admin' if me.is_admin }}">{{ 'Admin' if me.is_admin else 'Player' }}</span>
+          </span>
+        </span>
+        <form method="post" action="{{ url_for('logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="linkbtn" type="submit">Log out</button>
+        </form>
+      {% else %}
+        <a class="link" href="{{ url_for('login') }}">Log in</a>
+        {% if registration_open %}<a class="btn primary small" href="{{ url_for('register') }}">Register</a>{% endif %}
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flashes" aria-live="polite">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}" role="status">
+          <span class="flash-dot" aria-hidden="true"></span>
+          <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <span class="footer-credit">Powered by <b>DECODEKOZHIKODE</b></span>
+  </footer>
+
+  {# Kept outside <main>: body.snapped filters main, which would trap this fixed overlay. #}
+  <div class="snap-overlay" id="snap-overlay" role="dialog" aria-modal="true" aria-labelledby="snap-word" hidden>
+    <div class="snap-dust" aria-hidden="true">
+      {% for i in range(18) %}
+      <span style="--dx: {{ (i * 37) % 96 - 48 }}vw; --dy: {{ (i * 53) % 74 - 37 }}vh; --d: {{ ((i % 9) * 0.07)|round(2) }}s; --sz: {{ 4 + (i * 7) % 7 }}px"></span>
+      {% endfor %}
+    </div>
+    <span class="snap-flash" aria-hidden="true"></span>
+    <span class="snap-ring" aria-hidden="true"></span>
+    <div class="snap-copy">
+      <p class="snap-word" id="snap-word">SNAP</p>
+      <p class="snap-line">Perfectly balanced, as all things should be.</p>
+      <button class="btn ghost" id="snap-undo" type="button">Undo the snap</button>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}?v={{ static_version }}"></script>
+</body>
+</html>

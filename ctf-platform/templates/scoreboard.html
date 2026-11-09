@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Scoreboard · {{ platform_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">{% if scoreboard_visible %}<span class="live-dot" aria-hidden="true"></span> {% endif %}Standings</p>
+    <h1>Scoreboard</h1>
+    <p class="muted page-sub">Live ranking of every {{ 'team' if team_mode else 'operator' }} in the arena.</p>
+  </div>
+  <div class="row actions-row">
+    {% if scoreboard_visible %}
+    <span class="tag on"><span class="live-dot" aria-hidden="true"></span> Live</span>
+    {% else %}
+    <span class="tag warn">Hidden from players</span>
+    {% endif %}
+    <span class="tag">{{ rows|length }} {{ 'team' if team_mode else 'operator' }}{{ '' if rows|length == 1 else 's' }}</span>
+  </div>
+</section>
+
+{% if not scoreboard_visible %}
+<div class="notice">
+  <span class="notice-icon" aria-hidden="true">&#9888;</span>
+  <div>
+    <b>Admin preview.</b>
+    <span class="muted">The scoreboard is currently hidden from players. You can still view standings here.</span>
+    <a href="{{ url_for('admin_settings') }}">Change visibility</a>
+  </div>
+</div>
+{% endif %}
+
+{% if team_mode and me and not my_team %}
+<div class="notice">
+  <span class="notice-icon" aria-hidden="true">&#9888;</span>
+  <div>
+    <b>You are not on a team yet.</b>
+    <span class="muted">Team mode is active, so your solves only appear here after you join a team.</span>
+    <a href="{{ url_for('team_home') }}">Create or join a team</a>
+  </div>
+</div>
+{% endif %}
+
+{% if rows %}
+<section class="podium-grid" aria-label="Top three {{ 'teams' if team_mode else 'operators' }}">
+  {% for r in rows[:3] %}
+  <article class="podium-card podium-card-{{ loop.index }} {{ 'is-me' if r.is_me }}">
+    <span class="podium-rank">{{ 'Champion' if loop.index == 1 else ('Runner-up' if loop.index == 2 else 'Third place') }}</span>
+    <div class="podium-name">
+      <span class="podium-avatar">{{ r.name[0]|upper }}</span>
+      <h2>{{ r.name }}{% if r.is_me %}<span class="you-tag">you</span>{% endif %}</h2>
+    </div>
+    <div class="podium-score">{{ r.score }} <span>pts</span></div>
+    <p class="podium-meta">{{ r.solves }} solve{{ '' if r.solves == 1 else 's' }}{% if r.last %} · last solve {{ r.last.strftime('%d %b %H:%M') }}{% endif %}</p>
+  </article>
+  {% endfor %}
+</section>
+
+<div class="panel table-wrap">
+  <div class="panel-head">
+    <h2>Full standings</h2>
+    <span class="muted">Ranked by score, then earliest last solve</span>
+  </div>
+  <table class="data-table scoreboard-table">
+    <thead><tr><th class="num">Rank</th><th>{{ 'Team' if team_mode else 'Player' }}</th><th class="num">Solves</th><th class="num">Score</th><th>Last solve (UTC)</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr class="{{ 'me' if r.is_me }} {{ 'podium podium-' ~ loop.index if loop.index <= 3 }}">
+        <td class="num"><span class="rank-badge">{{ loop.index }}</span></td>
+        <td>
+          <span class="player-cell">
+            <span class="avatar small">{{ r.name[0]|upper }}</span>
+            <span>{{ r.name }}{% if r.is_me %}<span class="you-tag">you</span>{% endif %}</span>
+          </span>
+        </td>
+        <td class="num">{{ r.solves }}</td>
+        <td class="num score-cell">{{ r.score }}</td>
+        <td class="muted">{{ r.last.strftime('%Y-%m-%d %H:%M') if r.last else '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="panel empty-state">
+  <span class="empty-icon" aria-hidden="true">&#9873;</span>
+  <h2>No {{ 'teams' if team_mode else 'players' }} on the board yet</h2>
+  <p class="muted">The first captured flag will light this place up.</p>
+  <a class="btn primary" href="{{ url_for('challenges') }}">Open challenges</a>
+</div>
+{% endif %}
+{% endblock %}

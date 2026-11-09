@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<section class="page-head compact">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>All challenges</h1>
+    <p class="muted page-sub">{{ items|length }} total · {{ items|selectattr('visible')|list|length }} visible to players.</p>
+  </div>
+  <a class="btn primary" href="{{ url_for('admin_challenge_new') }}">+ New challenge</a>
+</section>
+
+<div class="panel table-wrap">
+  {% if items %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Challenge</th>
+        <th>Category</th>
+        <th class="num">Points</th>
+        <th class="num">Solves</th>
+        <th>Resources</th>
+        <th>Schedule (UTC)</th>
+        <th>Status</th>
+        <th class="actions-col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for c in items %}
+      <tr>
+        <td>
+          <span class="table-title">{{ c.title }}</span>
+          {% if c.description %}<span class="table-sub">{{ c.description|truncate(70) }}</span>{% endif %}
+        </td>
+        <td><span class="chip cat-chip">{{ c.category }}</span></td>
+        <td class="num">{{ c.points }}</td>
+        <td class="num">{{ counts.get(c.id, 0) }}</td>
+        <td>
+          <div class="resource-tags">
+            {% if c.hints %}<span class="resource-tag hint-tag" title="{{ c.hint_list|length }} hint{{ '' if c.hint_list|length == 1 else 's' }} available">&#128161; {{ c.hint_list|length }}</span>{% endif %}
+            {% if c.file_name %}
+            <a class="resource-tag" href="{{ url_for('challenge_download', cid=c.id) }}" title="Download {{ c.file_original }}">&#128206; File</a>
+            {% endif %}
+            {% if c.url %}
+            <a class="resource-tag" href="{{ c.url }}" target="_blank" rel="noopener noreferrer" title="{{ c.url }}">&#8599; Link</a>
+            {% endif %}
+            {% if not c.file_name and not c.url and not c.hints %}<span class="muted">—</span>{% endif %}
+          </div>
+        </td>
+        <td>
+          {% if c.start_at or c.end_at %}
+          <span class="tag {{ 'on' if c.state == 'live' else ('warn' if c.state == 'scheduled' else '') }}">{{ c.state|capitalize }}</span>
+          <span class="table-sub">
+            {% if c.start_at %}{{ c.start_at.strftime('%d %b %H:%M') }}{% else %}always{% endif %}
+            &rarr;
+            {% if c.end_at %}{{ c.end_at.strftime('%d %b %H:%M') }}{% else %}no end{% endif %}
+          </span>
+          {% else %}
+          <span class="tag">Always</span>
+          {% endif %}
+        </td>
+        <td><span class="tag {{ 'on' if c.visible }}">{{ 'Visible' if c.visible else 'Hidden' }}</span></td>
+        <td>
+          <div class="table-actions">
+            <a class="btn small" href="{{ url_for('admin_challenge_edit', cid=c.id) }}">Edit</a>
+            <form method="post" action="{{ url_for('admin_challenge_toggle', cid=c.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn small" type="submit">{{ 'Hide' if c.visible else 'Show' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('admin_challenge_delete', cid=c.id) }}" data-confirm="Delete '{{ c.title }}' and its solves?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn small danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <span class="empty-icon" aria-hidden="true">&#9873;</span>
+    <h2>No challenges yet</h2>
+    <p class="muted">Create your first challenge to open the arena.</p>
+    <a class="btn primary" href="{{ url_for('admin_challenge_new') }}">Create a challenge</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

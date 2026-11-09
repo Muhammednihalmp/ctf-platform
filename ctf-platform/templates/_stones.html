@@ -1,0 +1,36 @@
+<section class="stone-panel panel{% if stones_complete %} is-complete{% endif %}"
+         id="stone-panel" aria-labelledby="stone-title">
+  <div class="stone-head">
+    <div class="stone-head-copy">
+      <p class="eyebrow">Stone hunt</p>
+      <h2 id="stone-title">The six Infinity Stones</h2>
+      <p class="muted stone-sub">Claim each stone by solving {{ stone_required }} challenges in its category &mdash; extra challenges are optional. Collect all six and the Snap unlocks.</p>
+    </div>
+    <div class="stone-score" title="Stones collected">
+      <b id="stones-count">{{ stones_collected }}</b><span>/6</span>
+    </div>
+  </div>
+
+  <ol class="stone-list">
+    {% for s in stones %}
+    <li class="stone{% if s.unlocked %} is-earned{% endif %}" id="stone-{{ s.key }}"
+        data-stone="{{ s.key }}" data-cat="{{ s.cat }}"
+        title="{{ s.solved }} of {{ s.total }} solved &middot; {{ s.required }} needed"
+        style="--stone: {{ s.color }}; --stone-rgb: {{ s.rgb }};">
+      <span class="stone-gem" aria-hidden="true"></span>
+      <span class="stone-name">{{ s.name }} Stone</span>
+      <span class="stone-prog">
+        {% set counted = [s.solved, s.required]|min %}
+        <span class="stone-bar" aria-hidden="true"><i style="width: {{ ((counted / s.required) * 100)|round|int if s.required else 0 }}%"></i></span>
+        <span class="stone-frac mono">{{ s.solved }}/{{ s.total }}</span>
+        <span class="stone-state">{{ 'Collected' if s.unlocked else 'Locked' }}</span>
+      </span>
+    </li>
+    {% endfor %}
+  </ol>
+
+  <div class="snap-zone" id="snap-zone"{% if not stones_complete %} hidden{% endif %}>
+    <button class="snap-btn" id="snap-btn" type="button">SNAP</button>
+    <p class="muted snap-note">All six stones. One snap.</p>
+  </div>
+</section>

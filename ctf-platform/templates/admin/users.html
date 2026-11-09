@@ -1,0 +1,57 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<section class="page-head compact">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Users</h1>
+    <p class="muted page-sub">{{ rows|length }} accounts · promote admins or remove players.</p>
+  </div>
+</section>
+
+<div class="panel table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr><th>Player</th><th>Email</th><th>Team</th><th>Role</th><th class="num">Solves</th><th>Joined (UTC)</th><th class="actions-col">Actions</th></tr>
+    </thead>
+    <tbody>
+    {% for u, solves in rows %}
+      <tr>
+        <td>
+          <span class="player-cell">
+            <span class="avatar small">{{ u.username[0]|upper }}</span>
+            <span>{{ u.username }}{% if u.id == me.id %}<span class="you-tag">you</span>{% endif %}</span>
+          </span>
+        </td>
+        <td class="muted">{{ u.email }}</td>
+        <td class="muted">{% if u.team %}{{ u.team.name }}{% else %}—{% endif %}</td>
+        <td><span class="tag {{ 'on' if u.is_admin }}">{{ 'Admin' if u.is_admin else 'Player' }}</span></td>
+        <td class="num">{{ solves }}</td>
+        <td class="muted">{{ u.created.strftime('%Y-%m-%d') }}</td>
+        <td>
+          {% if u.id != me.id %}
+          <div class="table-actions">
+            <form method="post" action="{{ url_for('admin_user_role', uid=u.id) }}" data-confirm="Change role for {{ u.username }}?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn small" type="submit">{{ 'Make player' if u.is_admin else 'Make admin' }}</button>
+            </form>
+            {% if u.team_id %}
+            <form method="post" action="{{ url_for('admin_user_remove_team', uid=u.id) }}" data-confirm="Remove {{ u.username }} from {{ u.team.name }}?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn small" type="submit">Remove from team</button>
+            </form>
+            {% endif %}
+            <form method="post" action="{{ url_for('admin_user_delete', uid=u.id) }}" data-confirm="Delete {{ u.username }} and their solves?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn small danger" type="submit">Delete</button>
+            </form>
+          </div>
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7"><div class="table-empty">No users yet.</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

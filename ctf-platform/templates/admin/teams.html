@@ -1,0 +1,75 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<section class="page-head compact">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Teams</h1>
+    <p class="muted page-sub">{{ rows|length }} team{{ '' if rows|length == 1 else 's' }} · manage membership and clean up inactive crews.</p>
+  </div>
+  <div class="row actions-row">
+    <span class="tag {{ 'on' if team_mode }}">{{ 'Team mode' if team_mode else 'User mode' }}</span>
+    <a class="btn small" href="{{ url_for('admin_settings') }}">Change scoring mode</a>
+  </div>
+</section>
+
+{% if not team_mode %}
+<div class="notice">
+  <span class="notice-icon" aria-hidden="true">&#9888;</span>
+  <div>
+    <b>User mode is active.</b>
+    <span class="muted">Teams are not used for scoring right now, but you can still manage membership.</span>
+    <a href="{{ url_for('admin_settings') }}">Switch to team mode</a>
+  </div>
+</div>
+{% endif %}
+
+<div class="panel table-wrap">
+  {% if rows %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Team</th><th>Captain</th><th>Members</th><th class="num">Team score</th><th>Created (UTC)</th><th class="actions-col">Actions</th></tr>
+    </thead>
+    <tbody>
+    {% for team, count in rows %}
+      <tr>
+        <td>
+          <span class="table-title">{{ team.name }}</span>
+          <span class="table-sub mono">Invite {{ team.invite_code }}</span>
+        </td>
+        <td class="muted">{{ team.captain.username if team.captain else '—' }}</td>
+        <td>
+          <div class="member-tags">
+            {% for m in team.members %}
+            <span class="member-tag">
+              {{ m.username }}
+              <form method="post" action="{{ url_for('admin_team_remove_member', tid=team.id, uid=m.id) }}" data-confirm="Remove {{ m.username }} from {{ team.name }}?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" aria-label="Remove {{ m.username }}">&times;</button>
+              </form>
+            </span>
+            {% else %}
+            <span class="muted">No members</span>
+            {% endfor %}
+          </div>
+        </td>
+        <td class="num">{{ scores.get(team.id, 0) }}</td>
+        <td class="muted">{{ team.created.strftime('%Y-%m-%d') if team.created else '—' }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin_team_delete', tid=team.id) }}" data-confirm="Delete {{ team.name }}? Members will be removed from the team.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn small danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <span class="empty-icon" aria-hidden="true">&#9789;</span>
+    <h2>No teams yet</h2>
+    <p class="muted">Switch to team mode and players can create their crews from the Team page.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

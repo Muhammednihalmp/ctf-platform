@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Challenges · {{ platform_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Arena</p>
+    <h1>Challenges</h1>
+    <p class="muted page-sub">Pick a target, dig in, and capture the flag.</p>
+  </div>
+  <div class="score-pill">
+    <span class="score-label">{{ 'Team score' if team_mode else 'Your score' }}</span>
+    <b id="score">{{ score }}</b>
+    <span class="score-unit">pts</span>
+  </div>
+</section>
+
+{% if team_mode %}
+  {% if my_team %}
+  <div class="team-strip panel">
+    <div class="team-strip-main">
+      <span class="tag on"><span class="live-dot" aria-hidden="true"></span> Team mode</span>
+      <span class="muted">Scoring for <b>{{ my_team.name }}</b> · {{ my_team.member_count }} member{{ '' if my_team.member_count == 1 else 's' }}</span>
+    </div>
+    <a class="btn small ghost" href="{{ url_for('team_home') }}">Manage team</a>
+  </div>
+  {% else %}
+  <div class="notice">
+    <span class="notice-icon" aria-hidden="true">&#9888;</span>
+    <div>
+      <b>Team mode is active.</b>
+      <span class="muted">Create or join a team before submitting flags. Team scores are combined automatically.</span>
+      <a href="{{ url_for('team_home') }}">Set up your team</a>
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+
+{% include "_stones.html" %}
+
+{% if groups %}
+<div class="toolbar">
+  <div class="search-field">
+    <span class="search-icon" aria-hidden="true">&#9906;</span>
+    <input id="challenge-search" type="search" placeholder="Search challenges…" aria-label="Search challenges" autocomplete="off">
+  </div>
+  <div class="chips" id="category-filter" role="group" aria-label="Filter by category">
+    <button class="chip is-active" type="button" data-cat="all">All</button>
+    {% for cat in groups.keys() %}
+    {% set st = stones_by_cat.get(cat) %}
+    <button class="chip" type="button" data-cat="{{ cat }}"{% if st %} data-stone="{{ st.key }}" style="--stone: {{ st.color }}; --stone-rgb: {{ st.rgb }};"{% endif %}>{{ cat }}</button>
+    {% endfor %}
+  </div>
+</div>
+
+<p class="muted empty-filter" id="filter-empty" hidden>No challenges match your filters.</p>
+
+{% for cat, items in groups.items() %}
+{% set st = stones_by_cat.get(cat) %}
+<section class="cat" data-category="{{ cat }}"{% if st %} style="--stone: {{ st.color }}; --stone-rgb: {{ st.rgb }};"{% endif %}>
+  <div class="cat-head">
+    <h2>{% if st %}<span class="gem-mini" aria-hidden="true"></span>{% endif %}{{ cat }}</h2>
+    <div class="cat-meta">
+      {% if st %}<span class="cat-stone{% if st.unlocked %} is-earned{% endif %}">{{ st.solved }}/{{ st.total }}{% if st.unlocked %} · Stone claimed{% elif st.total > st.required %} · {{ st.required - st.solved }} to claim{% endif %}</span>{% endif %}
+      <span class="cat-count">{{ items|length }} {{ 'challenge' if items|length == 1 else 'challenges' }}</span>
+    </div>
+  </div>
+  <div class="grid">
+    {% for c in items %}
+    {% set cstate = 'live' if me.is_admin else c.state %}
+    {% set locked = cstate == 'scheduled' %}
+    {% set card_hints = [] if locked else c.hint_list %}
+    <button type="button" class="card {{ 'solved' if c.id in solved }} {{ 'is-scheduled' if c.state == 'scheduled' }} {{ 'is-ended' if c.state == 'ended' }}"
+            data-id="{{ c.id }}" data-title="{{ c.title }}" data-points="{{ c.points }}"
+            data-category="{{ c.category }}"
+            data-state="{{ cstate }}"
+            data-schedule-state="{{ c.state }}"
+            data-start="{{ c.start_at.strftime('%Y-%m-%dT%H:%M:%SZ') if c.start_at else '' }}"
+            data-end="{{ c.end_at.strftime('%Y-%m-%dT%H:%M:%SZ') if c.end_at else '' }}"
+            data-start-label="{{ c.start_at.strftime('%d %b %Y %H:%M UTC') if c.start_at else '' }}"
+            data-end-label="{{ c.end_at.strftime('%d %b %Y %H:%M UTC') if c.end_at else '' }}"
+            data-url="{{ (c.url or '') if not locked else '' }}"
+            data-file="{{ (c.file_name or '') if not locked else '' }}"
+            data-filename="{{ (c.file_original or '') if not locked else '' }}"
+            data-filesize="{{ (c.file_size|filesizeformat) if c.file_size and not locked else '' }}"
+            data-hints="{{ card_hints|tojson|forceescape }}"
+            data-team-required="{{ 1 if team_mode and not my_team and not me.is_admin else 0 }}"
+            data-solved="{{ 1 if c.id in solved else 0 }}">
+      <span class="card-top">
+        <span class="chip cat-chip{% if st %} stone-chip{% endif %}"{% if st %} style="--stone: {{ st.color }}; --stone-rgb: {{ st.rgb }};"{% endif %}>{{ c.category }}</span>
+        <span class="card-pts">{{ c.points }} pts</span>
+      </span>
+      <span class="card-title">{{ c.title }}</span>
+      <span class="card-foot">
+        {% if c.state == 'scheduled' %}
+        <span class="badge schedule-badge">Starts in <span class="countdown" data-countdown-to="{{ c.start_at.strftime('%Y-%m-%dT%H:%M:%SZ') }}">{{ c.start_at.strftime('%d %b %H:%M') }}</span></span>
+        {% elif c.state == 'ended' %}
+        <span class="badge ended-badge">Ended</span>
+        {% elif c.end_at %}
+        <span class="badge schedule-badge">Ends in <span class="countdown" data-countdown-to="{{ c.end_at.strftime('%Y-%m-%dT%H:%M:%SZ') }}">{{ c.end_at.strftime('%d %b %H:%M') }}</span></span>
+        {% endif %}
+        {% if c.url and not locked %}<span class="badge" title="Has an external link">Link</span>{% endif %}
+        {% if c.file_name and not locked %}<span class="badge" title="Has a downloadable file">File</span>{% endif %}
+        {% if c.hint_list and not locked %}<span class="badge hint-badge" title="{{ c.hint_list|length }} hint{{ '' if c.hint_list|length == 1 else 's' }} available">Hint {{ c.hint_list|length }}</span>{% endif %}
+        {% if c.id in solved %}<span class="tick">Solved</span>{% endif %}
+      </span>
+      <span class="desc" hidden>{% if locked %}This target unlocks {{ c.start_at.strftime('%d %b %Y at %H:%M UTC') }}.{% else %}{{ c.description }}{% endif %}</span>
+    </button>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% else %}
+<div class="panel empty-state">
+  <span class="empty-icon" aria-hidden="true">&#9873;</span>
+  <h2>No challenges yet</h2>
+  <p class="muted">The arena is being prepared. Check back soon.</p>
+</div>
+{% endif %}
+
+<dialog id="modal" class="challenge-modal" aria-labelledby="m-title">
+  <div class="modal-head">
+    <div class="modal-heading">
+      <span class="chip cat-chip" id="m-cat"></span>
+      <h2 id="m-title"></h2>
+    </div>
+    <button class="icon-btn" id="m-close" type="button" aria-label="Close challenge">&times;</button>
+  </div>
+
+  <div class="modal-meta">
+    <span class="card-pts" id="m-meta"></span>
+    <span class="modal-status" id="m-status" hidden>Solved</span>
+  </div>
+
+  <p class="modal-schedule" id="m-schedule" hidden></p>
+
+  <div id="m-desc" class="modal-desc"></div>
+
+  <div class="resource-row" id="m-resources" hidden>
+    <a id="m-link" class="btn small" href="#" target="_blank" rel="noopener noreferrer" hidden>
+      <span aria-hidden="true">&#8599;</span> Open resource
+    </a>
+    <a id="m-file" class="btn small file-btn" href="#" hidden>
+      <span aria-hidden="true">&#8681;</span> <span id="m-filename">Download file</span>
+    </a>
+    <span class="file-meta muted" id="m-filemeta" hidden></span>
+  </div>
+
+  <div class="hints-panel" id="m-hints" hidden>
+    <div class="hints-head">
+      <span class="hints-title">Hints</span>
+      <span class="hints-note">Reveal only what you need.</span>
+    </div>
+    <div class="hints-list" id="m-hint-list"></div>
+  </div>
+
+  <div class="flag-block">
+    <label for="m-flag">Submit flag</label>
+    <div class="flag-row">
+      <input id="m-flag" class="mono" type="text" placeholder="flag{...}" autocomplete="off" spellcheck="false">
+      <button id="m-send" class="btn primary" type="button">Submit</button>
+    </div>
+    <div id="m-result" class="result" role="status" aria-live="polite"></div>
+  </div>
+</dialog>
+{% endblock %}

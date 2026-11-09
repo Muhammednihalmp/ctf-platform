@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Alerts · {{ platform_name }}{% endblock %}
+{% block content %}
+<section class="page-head compact">
+  <div>
+    <p class="eyebrow">Broadcast channel</p>
+    <h1>Alerts</h1>
+    <p class="muted page-sub">Announcements and messages from the arena admins.</p>
+  </div>
+  <div class="row actions-row">
+    <span class="tag">{{ items|length }} alert{{ '' if items|length == 1 else 's' }}</span>
+    {% if me.is_admin %}<a class="btn small" href="{{ url_for('admin_notifications') }}">Manage notifications</a>{% endif %}
+  </div>
+</section>
+
+{% if items %}
+<div class="notice-feed">
+  {% for n in items %}
+  <article class="panel notice-card{{ ' is-new' if n.id in unread_ids }}">
+    <div class="notice-card-head">
+      <div>
+        <p class="eyebrow">{{ n.created.strftime('%d %b %Y · %H:%M UTC') if n.created else 'Announcement' }}</p>
+        <h2>{{ n.title }}</h2>
+      </div>
+      {% if n.id in unread_ids %}<span class="tag warn">New</span>{% endif %}
+    </div>
+    <p class="notice-message">{{ n.message }}</p>
+    {% if n.author %}<p class="notice-author muted">Posted by {{ n.author.username }}</p>{% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="panel empty-state">
+  <span class="empty-icon" aria-hidden="true">&#128276;</span>
+  <h2>No alerts yet</h2>
+  <p class="muted">When an admin broadcasts a message it will appear here.</p>
+  <a class="btn primary" href="{{ url_for('challenges') }}">Back to challenges</a>
+</div>
+{% endif %}
+{% endblock %}

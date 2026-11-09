@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block bodyclass %}home{% endblock %}
+{% block title %}{{ platform_name }} · Capture the flag{% endblock %}
+{% block content %}
+<section class="home-hero">
+  <div class="home-hero-copy">
+    <span class="hero-badge"><span class="live-dot" aria-hidden="true"></span> Live arena <span class="hero-badge-sep">/</span> Capture the flag</span>
+    <h1>{{ platform_name }}</h1>
+    <p class="home-lede">{{ tagline }}</p>
+    <p class="home-sub">Recon the board, pull apart the intel, and submit the flag before the next operator does.</p>
+    <div class="row hero-actions">
+      {% if me %}
+        <a class="btn primary large" href="{{ url_for('challenges') }}">Enter the arena</a>
+      {% else %}
+        {% if registration_open %}<a class="btn primary large" href="{{ url_for('register') }}">Create account</a>{% endif %}
+        <a class="btn large" href="{{ url_for('login') }}">Log in</a>
+      {% endif %}
+      {% if scoreboard_visible or (me and me.is_admin) %}
+      <a class="btn large ghost" href="{{ url_for('scoreboard') }}">Scoreboard</a>
+      {% endif %}
+    </div>
+    <div class="hero-tags" aria-label="Platform features">
+      <span>Target board</span>
+      <span>File drops</span>
+      <span>Resource links</span>
+      <span>Instant scoring</span>
+      {% if team_mode %}<span>Team scoring</span>{% endif %}
+      {% if stats.upcoming %}<span>{{ stats.upcoming }} scheduled</span>{% endif %}
+    </div>
+    <div class="hero-stats" aria-label="Arena totals">
+      <div class="hero-stat">
+        <span class="stat-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="2"/></svg>
+        </span>
+        <span class="stat-body"><b>{{ stats.challenges }}</b><span>live targets</span></span>
+      </div>
+      <div class="hero-stat">
+        <span class="stat-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </span>
+        <span class="stat-body"><b>{{ stats.teams if team_mode else stats.players }}</b><span>{{ 'teams' if team_mode else 'operators' }}</span></span>
+      </div>
+      <div class="hero-stat">
+        <span class="stat-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-1.5 4L16 12H5"/></svg>
+        </span>
+        <span class="stat-body"><b>{{ stats.solves }}</b><span>flags captured</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="hero-orbit" aria-hidden="true"></div>
+    <div class="terminal-wrap">
+      <div class="terminal" aria-hidden="true">
+        <div class="terminal-bar">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot amber"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">operator@arena: ~</span>
+        </div>
+        <div class="terminal-body mono">
+          <p><span class="t-prompt">$</span> ./arena --status</p>
+          <p class="t-out">[+] {{ stats.challenges }} target{{ '' if stats.challenges == 1 else 's' }} · {{ stats.players }} operator{{ '' if stats.players == 1 else 's' }} · {{ stats.solves }} capture{{ '' if stats.solves == 1 else 's' }}</p>
+          <p><span class="t-prompt">$</span> cat mission.txt</p>
+          <p class="t-out t-accent">{{ tagline }}</p>
+          <p><span class="t-prompt">$</span> whoami</p>
+          <p class="t-out">operator<span class="t-caret"></span></p>
+          <p class="t-out t-ok">[✓] channel secure — choose your target</p>
+        </div>
+        <div class="terminal-status mono">
+          <span><span class="status-dot" aria-hidden="true"></span> encrypted</span>
+          <span>mode: capture</span>
+          <span>{{ categories|length }} track{{ '' if categories|length == 1 else 's' }}</span>
+        </div>
+      </div>
+      <span class="float-chip chip-a" aria-hidden="true">{{ stats.challenges }} targets live</span>
+      <span class="float-chip chip-b" aria-hidden="true">{{ stats.solves }} flags captured</span>
+    </div>
+  </div>
+</section>
+
+{% include "_stones.html" %}
+
+<section class="home-cta">
+  <div>
+    <p class="eyebrow">Ready when you are</p>
+    <h2>The board is open.</h2>
+    <p class="muted">Bring your curiosity. The flags are waiting.</p>
+  </div>
+  {% if me %}
+  <a class="btn primary large" href="{{ url_for('challenges') }}">Back to challenges</a>
+  {% else %}
+  <div class="row actions-row">
+    {% if registration_open %}<a class="btn primary large" href="{{ url_for('register') }}">Create account</a>{% endif %}
+    <a class="btn large" href="{{ url_for('login') }}">Log in</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

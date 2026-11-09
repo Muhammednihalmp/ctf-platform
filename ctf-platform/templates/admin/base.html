@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Admin · {{ platform_name }}{% endblock %}
+{% block content %}
+<nav class="subnav" aria-label="Admin">
+  <a href="{{ url_for('admin_dashboard') }}" {% if request.endpoint == 'admin_dashboard' %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">&#9635;</span> Dashboard
+  </a>
+  <a href="{{ url_for('admin_challenges') }}" {% if request.endpoint and request.endpoint.startswith('admin_challenge') %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">&#9873;</span> Challenges
+  </a>
+  <a href="{{ url_for('admin_users') }}" {% if request.endpoint and request.endpoint.startswith('admin_user') %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">&#9787;</span> Users
+  </a>
+  <a href="{{ url_for('admin_teams') }}" {% if request.endpoint and request.endpoint.startswith('admin_team') %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">&#9789;</span> Teams
+  </a>
+  <a href="{{ url_for('admin_notifications') }}" {% if request.endpoint and request.endpoint.startswith('admin_notification') %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">&#128276;</span> Notifications
+  </a>
+  <a href="{{ url_for('admin_settings') }}" {% if request.endpoint == 'admin_settings' %}aria-current="page"{% endif %}>
+    <span aria-hidden="true">&#9881;</span> Platform settings
+  </a>
+</nav>
+{% block admin %}{% endblock %}
+{% endblock %}
